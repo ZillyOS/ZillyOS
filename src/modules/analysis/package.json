@@ -1,0 +1,22 @@
+{
+  "name": "@zilly-os/analysis",
+  "version": "0.1.0",
+  "description": "ZillyOS Analysis Module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "test": "jest"
+  },
+  "keywords": [
+    "zilly",
+    "os",
+    "analysis"
+  ],
+  "author": "ZillyOS Team",
+  "license": "MIT",
+  "dependencies": {
+    "@zilly-os/shared": "*",
+    "langchain": "^0.0.139"
+  }
+} 
