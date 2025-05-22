@@ -1,0 +1,56 @@
+name: ZillyOS CI
+
+on:
+  push:
+    branches: [ develop, staging ]
+  pull_request:
+    branches: [ develop, staging ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node-version: [18.x]
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm'
+    
+    - name: Install dependencies
+      run: npm ci
+    
+    - name: Lint
+      run: npm run lint
+    
+    - name: Test
+      run: npm test
+    
+    - name: Build
+      run: npm run build
+
+  validate-branch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Validate branch structure
+        run: |
+          if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            # Ensure PR target is appropriate
+            if [[ "${{ github.base_ref }}" != "develop" ]]; then
+              echo "Error: PRs must target the develop branch"
+              exit 1
+            fi
+            
+            # Verify version consistency
+            if ! grep -q "version" package.json; then
+              echo "Error: package.json missing version"
+              exit 1
+            fi
+          fi 

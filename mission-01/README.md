@@ -33,4 +33,8 @@ Contribution guidelines will be provided in a separate document.
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details. 
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## Version
+
+Current version: 0.1.0 

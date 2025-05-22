@@ -1,0 +1,203 @@
+name: Dependency Scanning
+
+on:
+  schedule:
+    - cron: '0 0 * * 1' # Run every Monday at midnight
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'package.json'
+      - 'package-lock.json'
+      - 'yarn.lock'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'package.json'
+      - 'package-lock.json'
+      - 'yarn.lock'
+  workflow_dispatch: # Allow manual triggering
+
+jobs:
+  security-scan:
+    name: Security Scan
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run npm audit
+        run: npm audit --json > security-audit.json || true
+      
+      - name: Run Snyk to check for vulnerabilities
+        uses: snyk/actions/node@master
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high
+      
+      - name: Upload security audit results
+        uses: actions/upload-artifact@v3
+        with:
+          name: security-audit-report
+          path: security-audit.json
+  
+  outdated-packages:
+    name: Outdated Packages
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Check for outdated packages
+        run: npm outdated --json > outdated-packages.json || true
+      
+      - name: Upload outdated packages report
+        uses: actions/upload-artifact@v3
+        with:
+          name: outdated-packages-report
+          path: outdated-packages.json
+  
+  dependency-report:
+    name: Generate Dependency Report
+    runs-on: ubuntu-latest
+    needs: [security-scan, outdated-packages]
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Install jq
+        run: sudo apt-get install jq
+      
+      - name: Download security audit report
+        uses: actions/download-artifact@v3
+        with:
+          name: security-audit-report
+      
+      - name: Download outdated packages report
+        uses: actions/download-artifact@v3
+        with:
+          name: outdated-packages-report
+      
+      - name: Generate Markdown report
+        run: |
+          mkdir -p reports
+          
+          # Create report header
+          cat << EOF > reports/dependency-report.md
+          # ZillyOS Dependency Report
+          Generated: $(date)
+          
+          ## Summary
+          
+          EOF
+          
+          # Add security section
+          if [ -f "security-audit.json" ]; then
+            echo "### Security" >> reports/dependency-report.md
+            
+            TOTAL_VULNS=$(jq '.metadata.vulnerabilities.total' security-audit.json || echo "N/A")
+            CRITICAL=$(jq '.metadata.vulnerabilities.critical' security-audit.json || echo "N/A")
+            HIGH=$(jq '.metadata.vulnerabilities.high' security-audit.json || echo "N/A")
+            
+            echo "- Total vulnerabilities: $TOTAL_VULNS" >> reports/dependency-report.md
+            echo "- Critical: $CRITICAL" >> reports/dependency-report.md
+            echo "- High: $HIGH" >> reports/dependency-report.md
+            echo "" >> reports/dependency-report.md
+          fi
+          
+          # Add outdated packages section
+          if [ -f "outdated-packages.json" ]; then
+            echo "### Outdated Packages" >> reports/dependency-report.md
+            
+            OUTDATED_COUNT=$(jq 'length' outdated-packages.json || echo "N/A")
+            echo "- Outdated packages: $OUTDATED_COUNT" >> reports/dependency-report.md
+            echo "" >> reports/dependency-report.md
+            
+            if [ "$OUTDATED_COUNT" != "0" ] && [ "$OUTDATED_COUNT" != "N/A" ]; then
+              echo "| Package | Current | Wanted | Latest |" >> reports/dependency-report.md
+              echo "|---------|---------|--------|--------|" >> reports/dependency-report.md
+              
+              jq -r 'to_entries | .[] | "| \(.key) | \(.value.current) | \(.value.wanted) | \(.value.latest) |"' \
+                outdated-packages.json >> reports/dependency-report.md
+              
+              echo "" >> reports/dependency-report.md
+            fi
+          fi
+          
+          # Add recommendations
+          echo "## Recommendations" >> reports/dependency-report.md
+          echo "" >> reports/dependency-report.md
+          
+          # Add security recommendations
+          if [ -f "security-audit.json" ]; then
+            CRITICAL=$(jq '.metadata.vulnerabilities.critical' security-audit.json || echo "0")
+            HIGH=$(jq '.metadata.vulnerabilities.high' security-audit.json || echo "0")
+            
+            if [ "$CRITICAL" != "0" ] || [ "$HIGH" != "0" ]; then
+              echo "### Security Actions" >> reports/dependency-report.md
+              echo "- **URGENT**: Address the critical and high severity vulnerabilities as soon as possible" >> reports/dependency-report.md
+              echo "- Run \`npm audit fix\` to automatically fix issues where possible" >> reports/dependency-report.md
+              echo "- For remaining issues, evaluate each package for update or replacement" >> reports/dependency-report.md
+              echo "" >> reports/dependency-report.md
+            fi
+          fi
+          
+          # Add outdated recommendations
+          if [ -f "outdated-packages.json" ]; then
+            OUTDATED_COUNT=$(jq 'length' outdated-packages.json || echo "0")
+            
+            if [ "$OUTDATED_COUNT" != "0" ] && [ "$OUTDATED_COUNT" != "N/A" ]; then
+              echo "### Update Strategy" >> reports/dependency-report.md
+              echo "- Update packages with security patches immediately" >> reports/dependency-report.md
+              echo "- Schedule updates for minor version changes" >> reports/dependency-report.md
+              echo "- Test thoroughly before updating major versions" >> reports/dependency-report.md
+              echo "- Consider using Dependabot for automated updates" >> reports/dependency-report.md
+              echo "" >> reports/dependency-report.md
+            fi
+          fi
+      
+      - name: Upload dependency report
+        uses: actions/upload-artifact@v3
+        with:
+          name: dependency-report
+          path: reports/dependency-report.md
+      
+      - name: Create/Update Issue with Dependency Report
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        uses: peter-evans/create-issue-from-file@v4
+        with:
+          title: Dependency Report
+          content-filepath: reports/dependency-report.md
+          labels: dependencies, report
+          token: ${{ secrets.GITHUB_TOKEN }} 

@@ -1,0 +1,32 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+# Check if we're adding package.json or package-lock.json
+PACKAGE_FILES=$(git diff --cached --name-only | grep -E 'package(-lock)?\.json$')
+
+if [ -n "$PACKAGE_FILES" ]; then
+  echo "📦 Checking for dependency vulnerabilities..."
+  
+  # Run npm audit to check for vulnerabilities
+  npm audit --audit-level=high
+  
+  # Store the exit code
+  AUDIT_RESULT=$?
+  
+  if [ $AUDIT_RESULT -ne 0 ]; then
+    echo "❌ High or critical vulnerabilities detected in dependencies!"
+    echo "Please run 'npm audit fix' to fix the issues if possible,"
+    echo "or review them manually with 'npm audit'."
+    echo ""
+    echo "To bypass this check in exceptional cases, use --no-verify flag:"
+    echo "git commit --no-verify"
+    echo ""
+    exit 1
+  else
+    echo "✅ No high or critical vulnerabilities detected."
+  fi
+fi
+
+# Continue with other checks
+echo "🧹 Running linters..."
+npx lint-staged 

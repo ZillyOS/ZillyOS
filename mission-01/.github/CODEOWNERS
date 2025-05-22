@@ -1,0 +1,41 @@
+# ZillyOS CODEOWNERS file
+# This file determines who is responsible for reviewing and approving changes to different parts of the codebase.
+# For more information, see: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Default owners for everything in the repo
+* @zillyzoo/core-team
+
+# Core architecture
+/src/core/ @zillyzoo/architecture-team
+/docs/architecture/ @zillyzoo/architecture-team
+
+# API and interfaces
+/src/api/ @zillyzoo/api-team
+/docs/api/ @zillyzoo/api-team
+
+# Build and infrastructure
+/scripts/ @zillyzoo/devops-team
+/.github/workflows/ @zillyzoo/devops-team
+/build/ @zillyzoo/devops-team
+
+# Documentation
+/docs/ @zillyzoo/docs-team
+
+# Testing
+/test/ @zillyzoo/qa-team
+/__tests__/ @zillyzoo/qa-team
+
+# Security-sensitive code
+/src/auth/ @zillyzoo/security-team
+/src/crypto/ @zillyzoo/security-team
+/SECURITY.md @zillyzoo/security-team
+
+# Configuration files
+*.json @zillyzoo/core-team
+*.yml @zillyzoo/core-team
+*.yaml @zillyzoo/core-team
+
+# Dependency management
+package.json @zillyzoo/dependency-team
+package-lock.json @zillyzoo/dependency-team
+yarn.lock @zillyzoo/dependency-team 
