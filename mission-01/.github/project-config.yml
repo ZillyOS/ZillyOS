@@ -1,0 +1,182 @@
+# Project Board Configuration
+
+# This file defines the configuration for the ZillyOS GitHub project boards
+# It is used by automated workflows to manage projects and issues
+
+version: 1
+
+# Project board definitions
+projects:
+  development:
+    name: "ZillyOS Development"
+    description: "Track development progress of ZillyOS"
+    columns:
+      - name: "Backlog"
+        description: "Issues that are not yet prioritized"
+        auto_assign:
+          new_issues: true
+      - name: "Ready for Development"
+        description: "Issues that are ready to be worked on"
+      - name: "In Progress"
+        description: "Issues that are actively being worked on"
+        auto_assign:
+          on_status: "in_progress"
+      - name: "Review"
+        description: "Issues with PRs that need review"
+        auto_assign:
+          on_pr_created: true
+      - name: "Done"
+        description: "Issues that are completed"
+        auto_assign:
+          on_pr_merged: true
+  
+  bugs:
+    name: "Bug Tracking"
+    description: "Track and prioritize bugs"
+    columns:
+      - name: "New"
+        description: "Newly reported bugs"
+        auto_assign:
+          new_issues_with_label: "bug"
+      - name: "Triaged"
+        description: "Bugs that have been evaluated and prioritized"
+      - name: "In Progress"
+        description: "Bugs that are being fixed"
+      - name: "Ready for Testing"
+        description: "Bug fixes ready for QA verification"
+      - name: "Verified"
+        description: "Bug fixes that have been verified"
+  
+  releases:
+    name: "Release Planning"
+    description: "Track releases and milestones"
+    columns:
+      - name: "Planning"
+        description: "Features being considered for upcoming releases"
+      - name: "Next Release"
+        description: "Features committed for the next release"
+      - name: "In Development"
+        description: "Features actively being developed for release"
+      - name: "Testing"
+        description: "Features in QA for the upcoming release"
+      - name: "Ready to Release"
+        description: "Features ready for the next release"
+      - name: "Released"
+        description: "Features that have been released"
+
+# Issue label definitions
+labels:
+  - name: "bug"
+    color: "d73a4a"
+    description: "Something isn't working"
+  
+  - name: "enhancement"
+    color: "a2eeef"
+    description: "New feature or request"
+  
+  - name: "documentation"
+    color: "0075ca"
+    description: "Improvements or additions to documentation"
+  
+  - name: "good first issue"
+    color: "7057ff"
+    description: "Good for newcomers"
+  
+  - name: "help wanted"
+    color: "008672"
+    description: "Extra attention is needed"
+  
+  - name: "question"
+    color: "d876e3"
+    description: "Further information is requested"
+  
+  - name: "security"
+    color: "ee0701"
+    description: "Security-related issue"
+  
+  - name: "performance"
+    color: "fbca04"
+    description: "Performance-related issue"
+  
+  - name: "refactor"
+    color: "1d76db"
+    description: "Code needs to be restructured"
+  
+  - name: "test"
+    color: "0e8a16"
+    description: "Testing-related issue"
+  
+  - name: "dependencies"
+    color: "5319e7"
+    description: "Dependency-related updates"
+  
+  - name: "critical"
+    color: "b60205"
+    description: "High-priority issue that needs immediate attention"
+  
+  - name: "blocked"
+    color: "000000"
+    description: "Issue is blocked by another issue or external factor"
+  
+  - name: "feature-request"
+    color: "c5def5"
+    description: "Request for a new feature"
+  
+  - name: "wontfix"
+    color: "ffffff"
+    description: "This will not be worked on"
+
+# Milestone definitions
+milestones:
+  - name: "0.1.0"
+    description: "Initial development setup and core architecture"
+    due_date: "2025-06-15"
+  
+  - name: "0.2.0"
+    description: "Core API implementation and basic functionality"
+    due_date: "2025-07-30"
+  
+  - name: "0.3.0"
+    description: "Advanced features and performance optimizations"
+    due_date: "2025-09-15"
+  
+  - name: "1.0.0"
+    description: "First stable release with complete documentation"
+    due_date: "2025-11-01"
+
+# Automation rules
+automation:
+  # Auto-labeling based on title/body content
+  auto_label:
+    - label: "documentation"
+      if_contains: ["docs", "documentation", "readme", "guide"]
+    
+    - label: "bug"
+      if_contains: ["bug", "error", "problem", "fails", "failing"]
+    
+    - label: "enhancement"
+      if_contains: ["feature", "enhancement", "improve", "request"]
+    
+    - label: "question"
+      if_contains: ["question", "help", "clarification", "how to"]
+  
+  # Auto-assign issues based on content
+  auto_assign:
+    - team: "documentation"
+      if_labeled: "documentation"
+    
+    - team: "core-developers"
+      if_labeled: "bug"
+      if_critical: true
+    
+    - team: "security"
+      if_labeled: "security"
+  
+  # Stale issue handling
+  stale_issues:
+    days_before_stale: 60
+    days_before_close: 7
+    exempt_labels: ["security", "critical", "good first issue"]
+    stale_label: "stale"
+    stale_comment: "This issue has been automatically marked as stale because it has not had recent activity. It will be closed if no further activity occurs. Thank you for your contributions."
+    close_comment: "This issue has been automatically closed due to inactivity. Please feel free to reopen it if still relevant." 

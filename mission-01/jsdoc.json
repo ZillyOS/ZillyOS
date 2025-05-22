@@ -1,0 +1,48 @@
+{
+  "source": {
+    "include": ["src"],
+    "includePattern": ".+\\.(js|ts)$",
+    "excludePattern": "(node_modules/|docs/|dist/|__tests__/)"
+  },
+  "plugins": [
+    "plugins/markdown",
+    "node_modules/jsdoc-babel",
+    "node_modules/better-docs/typescript"
+  ],
+  "babel": {
+    "extensions": ["ts"],
+    "presets": ["@babel/preset-typescript"]
+  },
+  "opts": {
+    "template": "node_modules/better-docs",
+    "destination": "docs/jsdoc",
+    "recurse": true,
+    "readme": "README.md"
+  },
+  "templates": {
+    "cleverLinks": true,
+    "monospaceLinks": true,
+    "default": {
+      "outputSourceFiles": true,
+      "includeDate": false
+    },
+    "better-docs": {
+      "name": "ZillyOS API Documentation",
+      "title": "ZillyOS API Documentation",
+      "navLinks": [
+        {
+          "label": "GitHub",
+          "href": "https://github.com/zillyzoo/ZillyOS"
+        },
+        {
+          "label": "Tutorials",
+          "href": "tutorials.html"
+        }
+      ]
+    }
+  },
+  "tags": {
+    "allowUnknownTags": ["typescript"],
+    "dictionaries": ["jsdoc", "typescript"]
+  }
+} 
